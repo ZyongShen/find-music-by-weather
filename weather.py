@@ -7,6 +7,7 @@ class Weather:
         self.weather_moods = {
             "Sunny": "Cheerful, uplifting, energizing",
             "Cloudy": "Contemplative, gloomy, calm",
+            "Overcast": "Contemplative, gloomy, calm",
             "Rain": "Reflective, melancholic, cozy",
             "Showers": "Unpredictable, dynamic, refreshing",
             "Scattered Rain": "Unpredictable, dynamic, refreshing",
@@ -15,6 +16,10 @@ class Weather:
             "Foggy": "Mysterious, eerie, quiet",
             "Windy": "Wild, chaotic, refreshing",
             "Severe Weather": "Anxious, thrilling, ominous"
+        }
+
+        self.weather_moods = {
+            ""
         }
 
     def get_weather(self):
@@ -31,3 +36,14 @@ class Weather:
         )
 
         return response.json()
+    
+    def get_conditions(self):
+        weather_response = self.get_weather()
+        current_conditions = weather_response["current"]["condition"]
+        return current_conditions
+    
+    def get_moods(self, conditions):
+        try:
+            return self.weather_moods[conditions["text"]]
+        except:
+            return []
