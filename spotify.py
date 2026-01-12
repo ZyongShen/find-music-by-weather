@@ -1,88 +1,79 @@
 import requests
-import base64
+from dotenv import load_dotenv
 import os
 
 class Spotify():
 
     def __init__(self):
-        self.token = self.retrieve_token()
-        self.max_recs = 5
-    
+        load_dotenv()
+        self.token = self._retrieve_token()
 
-    def retrieve_token(self):
-        token_url = "https://accounts.spotify.com/api/token"
-        id_secret = f"{os.environ['SPOTIFY_CLIENT_ID']}:{os.environ['SPOTIFY_CLIENT_SECRET']}"
-        print(id_secret)
-        id_secret_bytes = id_secret.encode("utf-8")
-        id_secret_encoded = base64.b64encode(id_secret_bytes)
-        id_secret_base64 = id_secret_encoded.decode('ascii')
 
-        body = {
-            "grant_type": "client_credentials"
+    def _retrieve_token(self):
+        try:
+            payload = {
+                "grant_type": "client_credentials",
+                "client_id": os.getenv("SPOTIFY_CLIENT_ID"),
+                "client_secret": os.getenv("SPOTIFY_CLIENT_SECRET")
+            }
+            url = "https://accounts.spotify.com/api/token"
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+            response = requests.post(
+                url=url,
+                data=payload,
+                headers=headers
+            )
+            return response.json().get("access_token")
+
+        except Exception as e:
+            raise Exception(str(e))
+
+    def search_music(self, keywords: list[str]):
+        url = "https://api.spotify.com/v1/search"
+        search_string = ",".join(keywords) + " music"
+        types = ["playlist", "album", "track"]
+        params = {
+            "q": search_string,
+            "type": ",".join(types)
         }
         headers = {
-            "Authorization": f"Basic {id_secret_base64}",
-            "Content-Type": "application/x-www-form-urlencoded"
+            "Authorization": f"Bearer {self.token}"
+        }
+        result = {
+            "albums": {},
+            "playlists": {},
+            "tracks": {}
         }
 
-        response = requests.post(
-            token_url,
-            headers=headers,
-            data=body
-        )
 
-        return response.json()["access_token"]
-    
-    def create_music_search(self, moods):
-        search_url = "https://api.spotify.com/v1/search"
-        query_payload = {}
-        playlist_results = []
-        for mood in moods:
-            types_list = ["playlist"]
-            query_payload = {
-                "q": mood,
-                "type": types_list
-            }
-            headers = {
-                "Authorization": f"Bearer {self.token}"
-            }
+        try:
             response = requests.get(
-                search_url, 
-                params=query_payload, 
+                url,
+                params=params,
                 headers=headers
-                ).json()
-            
-            return response
-            
-            # count = 0
-            # for item in playlist_search_results:
-            #     playlist_item = {
-            #         "name": item["name"]
-            #     }
-            
-            # count = 0
-            # for item in response["items"]:
-            #     playlist_item = {
-            #         "name": item["name"],
-            #         "tracks": item["tracks"],
-            #         "images": item["images"],
-            #         "uri": item["uri"]
-            #     }
-            #     playlist_results.append(playlist_item)
-            #     count += 1
-            #     if count == self.max_recs:
-            #         break
+            )
+            if response.status_code != 200:
+                return "Search Failed"
 
-            # what to retrieve from the playlist object
-            '''
-            playlist tracks
-            playlist uri
-            playlist name
-            playlist images
-            '''
+            response_map = dict(response.json())
+            # aspects to take --> first image, name, external_urls[spotify]
+            # get 1 album, 1 track, 1 playlist
+            for k in result.keys():
+                print(k)
+                print(response_map[k]["items"][0].keys())
+                result[k] = {
+                    "image": response_map[k]["items"][0]["album"]["images"][0]["url"] if k is "tracks" else response_map[k]["items"][0]["images"][0]["url"],
+                    "external_link": response_map[k]["items"][0]["external_urls"]["spotify"],
+                    "name": response_map[k]["items"][0]["name"]
+                }
+
+            print("line 71")
+            return result
 
 
-        return playlist_results
-
+        except Exception as e:
+            return {"error": f"Unexpected error occurred: {str(e)}"}
         
     

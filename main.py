@@ -1,15 +1,22 @@
 from weather import Weather
 from spotify import Spotify
+from fastapi import FastAPI
 
-if __name__ == "__main__":
+app = FastAPI()
+
+@app.get("/get-music/")
+def get_weather():
     weather = Weather()
     spotify = Spotify()
 
-    current_conditions = weather.get_conditions()
-    print(current_conditions)
-    weather_moods = weather.get_moods(current_conditions)
+    moods = weather.get_mood_keywords()
+    search_results = spotify.search_music(moods)
 
-    playlists = spotify.create_music_search(weather_moods)
-    print(playlists)
+if __name__ == "__main__":
+    weather = Weather("02148")
+    spotify = Spotify()
+
+    moods = weather.get_mood_keywords()
+    search_results = spotify.search_music(moods)
 
     
