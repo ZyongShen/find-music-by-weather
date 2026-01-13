@@ -6,10 +6,10 @@ class Spotify():
 
     def __init__(self):
         load_dotenv()
-        self.token = self._retrieve_token()
+        self.token = Spotify._retrieve_token()
 
-
-    def _retrieve_token(self):
+    @staticmethod
+    def _retrieve_token():
         try:
             payload = {
                 "grant_type": "client_credentials",
@@ -61,15 +61,13 @@ class Spotify():
             # aspects to take --> first image, name, external_urls[spotify]
             # get 1 album, 1 track, 1 playlist
             for k in result.keys():
-                print(k)
-                print(response_map[k]["items"][0].keys())
+
                 result[k] = {
                     "image": response_map[k]["items"][0]["album"]["images"][0]["url"] if k is "tracks" else response_map[k]["items"][0]["images"][0]["url"],
                     "external_link": response_map[k]["items"][0]["external_urls"]["spotify"],
                     "name": response_map[k]["items"][0]["name"]
                 }
 
-            print("line 71")
             return result
 
 
